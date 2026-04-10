@@ -1,3 +1,5 @@
+from typing import Any
+
 from rest_framework import serializers
 
 from .models import Role, BusinessElement, AccessRule
@@ -43,7 +45,7 @@ class AccessRuleSerializer(serializers.ModelSerializer):
     @staticmethod
     def validate_boolean(name, value: str) -> None:
         """
-        Проверка валидности булевского значения
+        Проверка валидности логического значения
         """
         if value.lower() != 'true' and value.lower() != 'false':
             raise serializers.ValidationError({name: 'Значение должно быть true или false.'})
@@ -92,7 +94,7 @@ class AccessRuleSerializer(serializers.ModelSerializer):
         self.validate_boolean(value, 'delete_all_permission')
         return value
 
-    def validate(self, data):
+    def validate(self, data: dict[str, Any]) -> dict[str, Any]:
         """
         Логическая валидация: если разрешено 'all',
         то логично, что обычное разрешение тоже должно быть True.
