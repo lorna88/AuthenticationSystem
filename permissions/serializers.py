@@ -1,6 +1,7 @@
 from typing import Any
 
 from rest_framework import serializers
+from rest_framework.validators import UniqueTogetherValidator
 
 from .models import Role, BusinessElement, AccessRule
 
@@ -34,75 +35,28 @@ class AccessRuleSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = AccessRule
-        fields = [
-            'id', 'role', 'role_name', 'element', 'element_name',
-            'read_permission', 'read_all_permission',
-            'create_permission',
-            'update_permission', 'update_all_permission',
-            'delete_permission', 'delete_all_permission'
+        fields = '__all__'
+        validators = [
+            UniqueTogetherValidator(
+                queryset=AccessRule.objects.all(),
+                fields=['role', 'element'],
+                message="Для этой роли уже настроены правила доступа к данному элементу."
+            )
         ]
-
-    @staticmethod
-    def validate_boolean(name, value: str) -> None:
-        """
-        Проверка валидности логического значения
-        """
-        if value.lower() != 'true' and value.lower() != 'false':
-            raise serializers.ValidationError({name: 'Значение должно быть true или false.'})
-
-    def validate_role(self, value: int) -> int:
-        """
-        Проверка существования роли
-        """
-        if not Role.objects.filter(id=value).exists():
-            raise serializers.ValidationError({'role': 'Роль с таким ID отсутствует в системе.'})
-        return value
-
-    def validate_element(self, value: int) -> int:
-        """
-        Проверка существования бизнес-элемента
-        """
-        if not BusinessElement.objects.filter(id=value).exists():
-            raise serializers.ValidationError({'element': 'Элемент с таким ID отсутствует в системе.'})
-        return value
-
-    def validate_read_permission(self, value: str) -> str:
-        self.validate_boolean(value, 'read_permission')
-        return value
-
-    def validate_read_all_permission(self, value: str) -> str:
-        self.validate_boolean(value, 'read_all_permission')
-        return value
-
-    def validate_create_permission(self, value: str) -> str:
-        self.validate_boolean(value, 'create_permission')
-        return value
-
-    def validate_update_permission(self, value: str) -> str:
-        self.validate_boolean(value, 'update_permission')
-        return value
-
-    def validate_update_all_permission(self, value: str) -> str:
-        self.validate_boolean(value, 'update_all_permission')
-        return value
-
-    def validate_delete_permission(self, value: str) -> str:
-        self.validate_boolean(value, 'delete_permission')
-        return value
-
-    def validate_delete_all_permission(self, value: str) -> str:
-        self.validate_boolean(value, 'delete_all_permission')
-        return value
 
     def validate(self, data: dict[str, Any]) -> dict[str, Any]:
         """
         Логическая валидация: если разрешено 'all',
         то логично, что обычное разрешение тоже должно быть True.
         """
-        if data.get('read_all_permission') and not data.get('read_permission'):
-            data['read_permission'] = True
-        if data.get('update_all_permission') and not data.get('update_permission'):
-            data['update_permission'] = True
-        if data.get('delete_all_permission') and not data.get('delete_permission'):
-            data['delete_permission'] = True
+
+        permission_pairs = [
+            ('read_all_permission', 'read_permission'),
+            ('update_all_permission', 'update_permission'),
+            ('delete_all_permission', 'delete_permission'),
+        ]
+
+        for all_perm, single_perm in permission_pairs:
+            if data.get(all_perm) and not data.get(single_perm):
+                data[single_perm] = True
         return data

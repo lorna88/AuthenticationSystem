@@ -25,7 +25,7 @@ class RBACPermission(BasePermission):
         Проверка прав на уровне эндпоинта.
         """
         # Если пользователь не аутентифицирован (Middleware не сработал)
-        if not request.user or not request.user.is_authenticated:
+        if not request.user or not request.user.is_active or not request.user.is_authenticated:
             return False
 
         # Определяем, к какому элементу идет обращение
@@ -68,3 +68,12 @@ class RBACPermission(BasePermission):
             return getattr(obj, 'owner_id', None) == request.user.id
 
         return False
+
+
+class IsAdmin(BasePermission):
+    """
+    Разрешаем доступ только если пользователь - админ.
+    """
+    def has_permission(self, request, view):
+        return (request.user and request.user.is_active and
+                request.user.is_authenticated and request.user.is_admin)

@@ -1,7 +1,7 @@
 from django.db import models
 
 class Role(models.Model):
-    """Model for roles"""
+    """Модель для ролей"""
     name = models.CharField(max_length=100)
     slug = models.SlugField(unique=True)
 
@@ -10,7 +10,7 @@ class Role(models.Model):
 
 
 class BusinessElement(models.Model):
-    """Model for business elements"""
+    """Модель для бизнес элементов"""
     name = models.CharField(max_length=100)
     slug = models.SlugField(unique=True)
 
@@ -19,7 +19,7 @@ class BusinessElement(models.Model):
 
 
 class AccessRule(models.Model):
-    """Model for access roles rules"""
+    """Модель для прав доступа по ролям и видам ресурсов"""
     role = models.ForeignKey(Role, on_delete=models.CASCADE, related_name='rules')
     element = models.ForeignKey(BusinessElement, on_delete=models.CASCADE, related_name='rules')
     read_permission = models.BooleanField(default=False)
@@ -29,6 +29,12 @@ class AccessRule(models.Model):
     update_all_permission = models.BooleanField(default=False)
     delete_permission = models.BooleanField(default=False)
     delete_all_permission = models.BooleanField(default=False)
+
+    class Meta:
+        # У одной роли может быть только одно правило для конкретного элемента
+        unique_together = ('role', 'element')
+        verbose_name = "Правило доступа"
+        verbose_name_plural = "Правила доступа"
 
     def __str__(self):
         return f'{self.role.name} {self.element.name}'
