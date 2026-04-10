@@ -44,6 +44,22 @@ class AccessRuleSerializer(serializers.ModelSerializer):
             )
         ]
 
+    def validate_role(self, value: int) -> int:
+        """Запрещаем обновление роли"""
+        if self.instance and self.instance.role != value:
+            raise serializers.ValidationError(
+                {'role': "Нельзя изменить роль в существующем правиле."}
+            )
+        return value
+
+    def validate_element(self, value: int) -> int:
+        """Запрещаем обновление элемента"""
+        if self.instance and self.instance.element != value:
+            raise serializers.ValidationError(
+                {'element': "Нельзя изменить элемент в существующем правиле."}
+            )
+        return value
+
     def validate(self, data: dict[str, Any]) -> dict[str, Any]:
         """
         Логическая валидация: если разрешено 'all',
