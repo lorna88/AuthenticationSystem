@@ -1,8 +1,18 @@
 from django.http import HttpRequest
+from rest_framework.generics import CreateAPIView
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from .serializers import UserSerializer
+from .models import User
+from .serializers import UserSerializer, RegisterSerializer
+
+
+class RegisterUserView(CreateAPIView):
+    """View для регистрации пользователя."""
+    queryset = User.objects.all()
+    serializer_class = RegisterSerializer
+    permission_classes = ()
+    authentication_classes = ()
 
 
 class UserProfileView(APIView):
