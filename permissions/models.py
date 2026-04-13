@@ -4,13 +4,15 @@ class Role(models.Model):
     """Модель для ролей"""
     name = models.CharField(max_length=100)
     slug = models.SlugField(unique=True)
+    is_guest = models.BooleanField(default=False)
+    is_default_role = models.BooleanField(default=False)
 
     def __str__(self):
         return self.name
 
 
 class BusinessElement(models.Model):
-    """Модель для бизнес элементов"""
+    """Модель для бизнес-элементов"""
     name = models.CharField(max_length=100)
     slug = models.SlugField(unique=True)
 
