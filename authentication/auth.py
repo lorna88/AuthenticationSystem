@@ -4,6 +4,7 @@ from typing import Dict, Optional, Any
 
 import jwt
 
+from .models import BlacklistedToken
 from config import settings
 
 
@@ -58,6 +59,10 @@ class JWTAuthService(AuthService):
 
     def validate_session(self, token: str) -> Optional[int]:
         """Проверяет access-токен и возвращает user_id"""
+        # Если токен в черном списке, значит user разлогинился
+        if BlacklistedToken.objects.filter(token=token).exists():
+            return None
+
         try:
             payload = jwt.decode(token, settings.SECRET_KEY, algorithms=['HS256'])
             return payload.get('user_id')
@@ -71,6 +76,22 @@ class JWTAuthService(AuthService):
 
     def revoke_session(self, token: str) -> bool:
         """Заносит access-токен в черный список"""
-        pass
+        try:
+            # Декодируем токен без проверки подписи и срока годности,
+            payload = jwt.decode(token, options={"verify_signature": False})
+
+            # Извлекаем timestamp и переводим в datetime
+            exp_timestamp = payload.get('exp')
+            expires_at = datetime.fromtimestamp(exp_timestamp, tz=timezone.utc)
+
+            # Сохраняем в базу
+            BlacklistedToken.objects.get_or_create(
+                token=token,
+                defaults={'expires_at': expires_at}
+            )
+            return True
+        except (jwt.DecodeError, ValueError, TypeError):
+            return False
+
 
 auth_service = JWTAuthService()

@@ -1,6 +1,7 @@
 from django.shortcuts import get_object_or_404
 from rest_framework import status
 from rest_framework.generics import CreateAPIView
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -13,9 +14,11 @@ from .serializers import UserSerializer, RegisterSerializer, UserAdminSerializer
 
 
 class LoginView(APIView):
+    """View для аутентификации пользователя в системе"""
     permission_classes = []
 
-    def post(self, request):
+    def post(self, request: Request) -> Response:
+        """Проверяем email и пароль, и если они валидны, создаем сессию"""
         email = request.data.get('email')
         password = request.data.get('password')
 
@@ -33,6 +36,29 @@ class LoginView(APIView):
         return Response(token)
 
 
+class LogoutView(APIView):
+    """View для выхода пользователя из системы"""
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request: Request) -> Response:
+        """Достаем учетные данные и завершаем сессию"""
+        token = auth_service.extract_credentials(request)
+
+        if not token:
+            return Response(
+                {"detail": "Токен не предоставлен или имеет неверный формат"},
+                status=status.HTTP_401_UNAUTHORIZED
+            )
+
+        if auth_service.revoke_session(token):
+            return Response({"detail": "Вы успешно вышли из системы"})
+        return Response(
+            {"detail": "Не удалось выполнить выход: невалидный токен"},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+
+
 class RegisterUserView(CreateAPIView):
     """View для регистрации пользователя."""
     queryset = User.objects.all()
@@ -43,26 +69,15 @@ class RegisterUserView(CreateAPIView):
 
 class UserProfileView(APIView):
     """View для работы пользователя со своим профилем"""
+    permission_classes = [IsAuthenticated]
 
     def get(self, request: Request) -> Response:
         """Просмотр профиля"""
-        if not request.user.is_authenticated:
-            return Response(
-                {"detail": "Учетные данные не были предоставлены."},
-                status=status.HTTP_401_UNAUTHORIZED
-            )
-
         serializer = UserSerializer(request.user)
         return Response(serializer.data)
 
     def patch(self, request: Request) -> Response:
         """Изменение профиля (частичное)"""
-        if not request.user.is_authenticated:
-            return Response(
-                {"detail": "Учетные данные не были предоставлены."},
-                status=status.HTTP_401_UNAUTHORIZED
-            )
-
         serializer = UserSerializer(request.user, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save()
@@ -72,16 +87,13 @@ class UserProfileView(APIView):
     def delete(self, request: Request) -> Response:
         """Мягкое удаление пользователя"""
         user = request.user
-        if not user.is_authenticated:
-            return Response(
-                {"detail": "Учетные данные не были предоставлены."},
-                status=status.HTTP_401_UNAUTHORIZED
-            )
-
         user.is_active = False
         user.save()
 
-        # Инвалидируем токен (добавляем в Blacklist)
+        # Завершаем сессию с пользователем
+        token = auth_service.extract_credentials(request)
+        auth_service.revoke_session(token)
+
         return Response({"detail": "Аккаунт успешно деактивирован"}, status=204)
 
     def http_method_not_allowed(self, request: Request, *args, **kwargs) -> Response:
@@ -164,6 +176,10 @@ class UserManagementView(APIView):
         # Мягкое удаление (деактивация)
         target_user.is_active = False
         target_user.save()
+
+        # Завершаем сессию с пользователем
+        token = auth_service.extract_credentials(request)
+        auth_service.revoke_session(token)
 
         return Response(
             {"detail": f"Пользователь {target_user.email} деактивирован"},

@@ -27,3 +27,12 @@ class User(models.Model):
 
     def __str__(self):
         return self.email
+
+
+class BlacklistedToken(models.Model):
+    token = models.TextField(unique=True)
+    expires_at = models.DateTimeField()
+    blacklisted_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Помещен в черный список {self.blacklisted_at}"
