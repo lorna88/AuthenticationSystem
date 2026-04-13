@@ -9,6 +9,12 @@ from config import settings
 
 class AuthService(ABC):
     """Интерфейс, который описывает, что должен делать сервис аутентификации"""
+
+    @abstractmethod
+    def extract_credentials(self, request: Any) -> Optional[str]:
+        """Извлекает учетные данные из запроса"""
+        pass
+
     @abstractmethod
     def create_session(self, user: Any) -> Dict[str, str]:
         """Создает сессию с пользователем"""
@@ -33,6 +39,13 @@ class AuthService(ABC):
 class JWTAuthService(AuthService):
     """Реализация аутентификации через JWT"""
 
+    def extract_credentials(self, request: Any) -> Optional[str]:
+        """Извлекает access-токен из заголовка"""
+        auth_header = request.headers.get('Authorization')
+        if auth_header and auth_header.startswith('Bearer '):
+            return auth_header.split(' ')[1]
+        return None
+
     def create_session(self, user: Any) -> Dict[str, str]:
         """Возвращает словарь с access-токеном"""
         payload = {
@@ -40,12 +53,16 @@ class JWTAuthService(AuthService):
             'exp': datetime.now(timezone.utc) + timedelta(hours=24),
             'iat': datetime.now(timezone.utc)
         }
-        token = jwt.encode(payload, settings.SECRET_KEY, algorithm='HS256')
+        token = jwt.encode(payload, settings.SECRET_KEY, algorithms=['HS256'])
         return {"access": token}
 
     def validate_session(self, token: str) -> Optional[int]:
         """Проверяет access-токен и возвращает user_id"""
-        pass
+        try:
+            payload = jwt.decode(token, settings.SECRET_KEY, algorithms=['HS256'])
+            return payload.get('user_id')
+        except (jwt.ExpiredSignatureError, jwt.DecodeError):
+            return None
 
     def refresh_session(self, refresh_token: str) -> Dict[str, str]:
         """Обменивает refresh-токен на новую пару access/refresh"""

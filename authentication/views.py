@@ -1,6 +1,3 @@
-from datetime import datetime, timedelta, timezone
-
-import jwt
 from django.shortcuts import get_object_or_404
 from rest_framework import status
 from rest_framework.generics import CreateAPIView
@@ -10,7 +7,7 @@ from rest_framework.views import APIView
 
 from permissions.models import AccessRule
 from permissions.permissions import RBACPermission
-from .auth import AuthService, auth_service
+from .auth import auth_service
 from .models import User
 from .serializers import UserSerializer, RegisterSerializer, UserAdminSerializer
 
