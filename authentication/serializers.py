@@ -43,6 +43,12 @@ class RegisterSerializer(serializers.ModelSerializer):
 
         # Сохраняем в БД
         user.save()
+
+        # Добавляем роли по умолчанию
+        default_roles = Role.objects.filter(is_default=True)
+        if default_roles.exists():
+            user.roles.add(*default_roles)
+
         return user
 
 
