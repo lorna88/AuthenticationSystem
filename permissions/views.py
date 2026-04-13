@@ -1,7 +1,7 @@
 from rest_framework.viewsets import ModelViewSet
 
 from .models import AccessRule, Role, BusinessElement
-from .permissions import IsAdmin
+from .permissions import RBACPermission
 from .serializers import AccessRuleSerializer, RoleSerializer, BusinessElementSerializer
 
 
@@ -11,7 +11,7 @@ class AccessRuleViewSet(ModelViewSet):
     """
     queryset = AccessRule.objects.all()
     serializer_class = AccessRuleSerializer
-    permission_classes = [IsAdmin]
+    permission_classes = [RBACPermission]
     ordering = ['role', 'element']
 
 class RoleViewSet(ModelViewSet):
@@ -20,7 +20,7 @@ class RoleViewSet(ModelViewSet):
     """
     queryset = Role.objects.all()
     serializer_class = RoleSerializer
-    permission_classes = [IsAdmin]
+    permission_classes = [RBACPermission]
 
 class BusinessElementViewSet(ModelViewSet):
     """
@@ -28,4 +28,4 @@ class BusinessElementViewSet(ModelViewSet):
     """
     queryset = BusinessElement.objects.all()
     serializer_class = BusinessElementSerializer
-    permission_classes = [IsAdmin]
+    permission_classes = [RBACPermission]

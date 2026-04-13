@@ -91,12 +91,3 @@ class RBACPermission(BasePermission):
             return getattr(obj, 'owner_id', None) == user.id
 
         return False
-
-
-class IsAdmin(BasePermission):
-    """
-    Разрешаем доступ только если пользователь - админ.
-    """
-    def has_permission(self, request, view):
-        return (request.user and request.user.is_active and
-                request.user.is_authenticated and request.user.is_admin)
