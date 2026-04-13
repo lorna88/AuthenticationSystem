@@ -1,3 +1,6 @@
+from datetime import datetime, timedelta, timezone
+
+import jwt
 from django.shortcuts import get_object_or_404
 from rest_framework import status
 from rest_framework.generics import CreateAPIView
@@ -7,8 +10,30 @@ from rest_framework.views import APIView
 
 from permissions.models import AccessRule
 from permissions.permissions import RBACPermission
+from .auth import AuthService, auth_service
 from .models import User
 from .serializers import UserSerializer, RegisterSerializer, UserAdminSerializer
+
+
+class LoginView(APIView):
+    permission_classes = []
+
+    def post(self, request):
+        email = request.data.get('email')
+        password = request.data.get('password')
+
+        user = User.objects.filter(email=email).first()
+
+        if not user or not user.check_password(password):
+            return Response({"error": "Неверные данные"},
+                            status=status.HTTP_401_UNAUTHORIZED)
+
+        if not user.is_active:
+            return Response({"error": "Аккаунт деактивирован"},
+                            status=status.HTTP_401_UNAUTHORIZED)
+
+        token = auth_service.create_session(user)
+        return Response(token)
 
 
 class RegisterUserView(CreateAPIView):

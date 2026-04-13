@@ -1,0 +1,59 @@
+from abc import ABC, abstractmethod
+from datetime import datetime, timezone, timedelta
+from typing import Dict, Optional, Any
+
+import jwt
+
+from config import settings
+
+
+class AuthService(ABC):
+    """Интерфейс, который описывает, что должен делать сервис аутентификации"""
+    @abstractmethod
+    def create_session(self, user: Any) -> Dict[str, str]:
+        """Создает сессию с пользователем"""
+        pass
+
+    @abstractmethod
+    def validate_session(self, token: str) -> Optional[int]:
+        """Проверяет данные аутентификации"""
+        pass
+
+    @abstractmethod
+    def refresh_session(self, refresh_token: str) -> Dict[str, str]:
+        """Обновляет сессию"""
+        pass
+
+    @abstractmethod
+    def revoke_session(self, token: str) -> bool:
+        """Заканчивает сессию"""
+        pass
+
+
+class JWTAuthService(AuthService):
+    """Реализация аутентификации через JWT"""
+
+    def create_session(self, user: Any) -> Dict[str, str]:
+        """Возвращает словарь с access-токеном"""
+        payload = {
+            'user_id': user.id,
+            'exp': datetime.now(timezone.utc) + timedelta(hours=24),
+            'iat': datetime.now(timezone.utc)
+        }
+        token = jwt.encode(payload, settings.SECRET_KEY, algorithm='HS256')
+        return {"access": token}
+
+    def validate_session(self, token: str) -> Optional[int]:
+        """Проверяет access-токен и возвращает user_id"""
+        pass
+
+    def refresh_session(self, refresh_token: str) -> Dict[str, str]:
+        """Обменивает refresh-токен на новую пару access/refresh"""
+        # Пока не реализовано, выбрасываем исключение
+        raise NotImplementedError("Refresh-схема будет доступна в версии 2.0")
+
+    def revoke_session(self, token: str) -> bool:
+        """Заносит access-токен в черный список"""
+        pass
+
+auth_service = JWTAuthService()
