@@ -2,6 +2,7 @@ from typing import Any
 
 from rest_framework import serializers
 
+from permissions.models import Role
 from .models import User
 
 
@@ -49,11 +50,34 @@ class UserSerializer(serializers.ModelSerializer):
     """Сериализатор для просмотра, обновления и удаления профиля"""
     class Meta:
         model = User
-        fields = ['id', 'full_name', 'email', 'created_at']
-        read_only_fields = ['id', 'email', 'created_at']
+        fields = ['email', 'full_name']
+        read_only_fields = ['email']
 
     def update(self, instance: User, validated_data: dict[str, Any]) -> User:
         """Логика обновления профиля"""
         instance.full_name = validated_data.get('full_name', instance.full_name)
         instance.save()
         return instance
+
+
+class UserAdminSerializer(UserSerializer):
+    """Сериализатор для эндпоинта /users/ (админка)"""
+    roles = serializers.PrimaryKeyRelatedField(
+        many=True,
+        queryset=Role.objects.all()
+    )
+
+    class Meta(UserSerializer.Meta):
+        fields = UserSerializer.Meta.fields + ['id', 'is_active', 'roles', 'created_at']
+        read_only_fields = ['id', 'email', 'created_at']
+
+        def update(self, instance: User, validated_data: dict[str, Any]) -> User:
+            """Логика обновления профиля для админа"""
+            instance.is_active = validated_data.get('is_active', instance.is_active)
+
+            # Обновляем все роли пользователя
+            if 'roles' in validated_data:
+                roles = validated_data.pop('roles')
+                instance.roles.set(roles)
+
+            return super().update(instance, validated_data)

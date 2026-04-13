@@ -1,14 +1,14 @@
-from django.http import HttpRequest
 from django.shortcuts import get_object_or_404
 from rest_framework import status
 from rest_framework.generics import CreateAPIView
+from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from permissions.models import AccessRule
 from permissions.permissions import RBACPermission
 from .models import User
-from .serializers import UserSerializer, RegisterSerializer
+from .serializers import UserSerializer, RegisterSerializer, UserAdminSerializer
 
 
 class RegisterUserView(CreateAPIView):
@@ -22,7 +22,7 @@ class RegisterUserView(CreateAPIView):
 class UserProfileView(APIView):
     """View для работы пользователя со своим профилем"""
 
-    def get(self, request: HttpRequest) -> Response:
+    def get(self, request: Request) -> Response:
         """Просмотр профиля"""
         if not request.user.is_authenticated:
             return Response(
@@ -33,7 +33,7 @@ class UserProfileView(APIView):
         serializer = UserSerializer(request.user)
         return Response(serializer.data)
 
-    def patch(self, request: HttpRequest) -> Response:
+    def patch(self, request: Request) -> Response:
         """Изменение профиля (частичное)"""
         if not request.user.is_authenticated:
             return Response(
@@ -47,7 +47,7 @@ class UserProfileView(APIView):
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    def delete(self, request: HttpRequest) -> Response:
+    def delete(self, request: Request) -> Response:
         """Мягкое удаление пользователя"""
         user = request.user
         if not user.is_authenticated:
@@ -62,7 +62,7 @@ class UserProfileView(APIView):
         # Инвалидируем токен (добавляем в Blacklist)
         return Response({"detail": "Аккаунт успешно деактивирован"}, status=204)
 
-    def http_method_not_allowed(self, request: HttpRequest, *args, **kwargs) -> Response:
+    def http_method_not_allowed(self, request: Request, *args, **kwargs) -> Response:
         """Убираем поддержку метода PUT в целях безопасности"""
         if request.method == "PUT":
             return Response({
@@ -77,7 +77,7 @@ class UserManagementView(APIView):
     permission_classes = [RBACPermission]
     element_slug = 'users'
 
-    def get_filtered_users(self, request: HttpRequest) -> Response:
+    def get_filtered_users(self, request: Request) -> Response:
         """Фильтрация пользователей согласно имеющимся правам"""
         user = request.user
 
@@ -87,36 +87,36 @@ class UserManagementView(APIView):
             element__slug=self.element_slug
         )
 
-        # Если хотя бы одна роль дает право "Видеть всех"
+        # Если хотя бы одна роль дает право видеть всех пользователей (read_all_permission)
         if rules.filter(read_all_permission=True).exists():
             queryset = User.objects.all()
-            serializer = UserSerializer(queryset, many=True)
+            serializer = UserAdminSerializer(queryset, many=True)
             return Response(serializer.data)
 
-        # Если есть только право "Видеть себя" (read_permission)
+        # Если есть только право видеть себя (read_permission)
         if rules.filter(read_permission=True).exists():
-            # В данном случае "свой" объект для пользователя — это он сам
+            # В данном случае пользователь видит только один объект - самого себя
             queryset = User.objects.filter(id=user.id)
-            serializer = UserSerializer(queryset, many=True)
+            serializer = UserAdminSerializer(queryset, many=True)
             return Response(serializer.data)
 
         # Если нет ни одного из прав — возвращаем ошибку 403.
         return Response({"detail": "У вас нет прав на просмотр пользователей"},
                         status=status.HTTP_403_FORBIDDEN)
 
-    def get(self, request: HttpRequest, pk: int=None) -> Response:
+    def get(self, request: Request, pk: int=None) -> Response:
         """Просмотр списка пользователей либо профиля конкретного пользователя"""
         if pk:
             # Если есть read_all_permission — увидит любого.
             # Если только read_permission — увидит только если pk == request.user.id
             user = get_object_or_404(User, pk=pk)
             self.check_object_permissions(request, user)
-            return Response(UserSerializer(user).data)
+            return Response(UserAdminSerializer(user).data)
 
         # Логика фильтрации списка
         return self.get_filtered_users(request)
 
-    def patch(self, request: HttpRequest, pk: int) -> Response:
+    def patch(self, request: Request, pk: int) -> Response:
         """Частичное обновление данных пользователя"""
         # Находим пользователя по ID
         target_user = get_object_or_404(User, pk=pk)
@@ -125,13 +125,13 @@ class UserManagementView(APIView):
         self.check_object_permissions(request, target_user)
 
         # Обновляем данные
-        serializer = UserSerializer(target_user, data=request.data, partial=True)
+        serializer = UserAdminSerializer(target_user, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    def delete(self, request: HttpRequest, pk: int) -> Response:
+    def delete(self, request: Request, pk: int) -> Response:
         """Мягкое удаление пользователя"""
         # Находим пользователя
         target_user = get_object_or_404(User, pk=pk)
@@ -148,7 +148,7 @@ class UserManagementView(APIView):
             status=status.HTTP_204_NO_CONTENT
         )
 
-    def http_method_not_allowed(self, request: HttpRequest, *args, **kwargs) -> Response:
+    def http_method_not_allowed(self, request: Request, *args, **kwargs) -> Response:
         """Методы POST и PUT не поддерживаются"""
         suggestion = ""
         if request.method == "POST":
