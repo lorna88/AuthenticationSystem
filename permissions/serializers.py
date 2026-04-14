@@ -10,7 +10,7 @@ class RoleSerializer(serializers.ModelSerializer):
     """Сериализатор для модели ролей"""
     class Meta:
         model = Role
-        fields = ['id', 'name', 'slug']
+        fields = '__all__'
 
     def validate_slug(self, value):
         """Приводим слаг к нижнему регистру для консистентности"""
@@ -21,7 +21,7 @@ class BusinessElementSerializer(serializers.ModelSerializer):
     """Сериализатор для модели бизнес-элементов"""
     class Meta:
         model = BusinessElement
-        fields = ['id', 'name', 'slug']
+        fields = '__all__'
 
     def validate_slug(self, value):
         """Приводим слаг к нижнему регистру для консистентности"""

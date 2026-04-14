@@ -1,7 +1,8 @@
+from django.shortcuts import get_object_or_404
 from rest_framework.permissions import BasePermission
 
 from authentication.models import User
-from .models import AccessRule, Role
+from .models import AccessRule, Role, BusinessElement
 
 
 class RBACPermission(BasePermission):
@@ -33,6 +34,7 @@ class RBACPermission(BasePermission):
         element_slug = getattr(view, 'element_slug', None)
         if not element_slug:
             return False
+        element = get_object_or_404(BusinessElement, slug=element_slug)
 
         # Получаем название действия с элементом
         action = self.get_action_name(request.method)
@@ -46,6 +48,14 @@ class RBACPermission(BasePermission):
             user_roles = Role.objects.filter(is_guest=True)
 
         rules = AccessRule.objects.filter(role__in=user_roles, element__slug=element_slug)
+
+        # Определяем права доступа для системных таблиц
+        if element.is_system:
+            if user.is_system:
+                return True
+            if action == 'create':
+                return rules.filter(**{f"create_permission": True}).exists()
+            return rules.filter(**{f"{action}_all_permission": True}).exists()
 
         # Проверяем наличие хотя бы одного обычного правила
         if user.is_authenticated and rules.filter(**{f"{action}_permission": True}).exists():
@@ -65,6 +75,7 @@ class RBACPermission(BasePermission):
 
         # Определяем, к какому элементу идет обращение
         element_slug = getattr(view, 'element_slug', None)
+        element = get_object_or_404(BusinessElement, slug=element_slug)
 
         # Получаем название действия с элементом
         action = self.get_action_name(request.method)
@@ -79,6 +90,12 @@ class RBACPermission(BasePermission):
 
         rules = AccessRule.objects.filter(role__in=user_roles, element__slug=element_slug)
 
+        # Определяем права доступа для системных таблиц
+        if element.is_system:
+            if user.is_system:
+                return True
+            return rules.filter(**{f"{action}_all_permission": True}).exists()
+
         # Если есть право "All" — разрешаем доступ к любому объекту
         if rules.filter(**{f"{action}_all_permission": True}).exists():
             return True
@@ -86,8 +103,6 @@ class RBACPermission(BasePermission):
         # Если есть обычное право — проверяем владельца
         if user.is_authenticated and rules.filter(**{f"{action}_permission": True}).exists():
             # Проверяем, совпадает ли ID пользователя с полем owner у объекта
-            if isinstance(obj, User):
-                return getattr(obj, 'id', None) == user.id
             return getattr(obj, 'owner_id', None) == user.id
 
         return False
