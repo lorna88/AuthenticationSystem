@@ -60,6 +60,10 @@ class Command(BaseCommand):
                 slug='admin',
                 defaults={'name': 'Администратор', 'is_guest': False, 'is_default_role': False}
             )
+            manager_role, _ = Role.objects.get_or_create(
+                slug='manager',
+                defaults={'name': 'Менеджер', 'is_guest': False, 'is_default_role': False}
+            )
             user_role, _ = Role.objects.get_or_create(
                 slug='user',
                 defaults={'name': 'Пользователь', 'is_guest': False, 'is_default_role': True}
@@ -67,10 +71,6 @@ class Command(BaseCommand):
             guest_role, _ = Role.objects.get_or_create(
                 slug='guest',
                 defaults={'name': 'Гость', 'is_guest': True, 'is_default_role': False}
-            )
-            manager_role, _ = Role.objects.get_or_create(
-                slug='manager',
-                defaults={'name': 'Менеджер', 'is_guest': False, 'is_default_role': False}
             )
 
             # Создание элементов ресурсов
