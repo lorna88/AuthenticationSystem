@@ -13,7 +13,7 @@ class AccessRuleViewSet(ModelViewSet):
     serializer_class = AccessRuleSerializer
     permission_classes = [RBACPermission]
     ordering = ['role', 'element']
-    element_slug = 'access-rule'
+    element_slug = 'access_rules'
 
 class RoleViewSet(ModelViewSet):
     """
@@ -22,7 +22,7 @@ class RoleViewSet(ModelViewSet):
     queryset = Role.objects.all()
     serializer_class = RoleSerializer
     permission_classes = [RBACPermission]
-    element_slug = 'role'
+    element_slug = 'roles'
 
 class BusinessElementViewSet(ModelViewSet):
     """
@@ -31,4 +31,4 @@ class BusinessElementViewSet(ModelViewSet):
     queryset = BusinessElement.objects.all()
     serializer_class = BusinessElementSerializer
     permission_classes = [RBACPermission]
-    element_slug = 'business-element'
+    element_slug = 'business_elements'
