@@ -7,7 +7,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from permissions.models import AccessRule
-from permissions.permissions import RBACPermission
+from permissions.permissions import RBACPermission, IsNotSystemUser, IsNotSystemObject
 from .auth import auth_service
 from .models import User
 from .serializers import UserSerializer, RegisterSerializer, UserAdminSerializer
@@ -69,7 +69,7 @@ class RegisterUserView(CreateAPIView):
 
 class UserProfileView(APIView):
     """View для работы пользователя со своим профилем"""
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsNotSystemUser]
 
     def get(self, request: Request) -> Response:
         """Просмотр профиля"""
@@ -108,54 +108,26 @@ class UserProfileView(APIView):
 
 class UserManagementView(APIView):
     """View для управления всеми пользователями"""
-    permission_classes = [RBACPermission]
+    permission_classes = [RBACPermission, IsNotSystemObject]
     element_slug = 'users'
-
-    def get_filtered_users(self, request: Request) -> Response:
-        """Фильтрация пользователей согласно имеющимся правам"""
-        user = request.user
-
-        # Получаем все правила для текущего пользователя по этому ресурсу
-        rules = AccessRule.objects.filter(
-            role__in=user.roles.all(),
-            element__slug=self.element_slug
-        )
-
-        # Если хотя бы одна роль дает право видеть всех пользователей (read_all_permission)
-        if rules.filter(read_all_permission=True).exists():
-            queryset = User.objects.all()
-            serializer = UserAdminSerializer(queryset, many=True)
-            return Response(serializer.data)
-
-        # Если есть только право видеть себя (read_permission)
-        if rules.filter(read_permission=True).exists():
-            # В данном случае пользователь видит только один объект - самого себя
-            queryset = User.objects.filter(id=user.id)
-            serializer = UserAdminSerializer(queryset, many=True)
-            return Response(serializer.data)
-
-        # Если нет ни одного из прав — возвращаем ошибку 403.
-        return Response({"detail": "У вас нет прав на просмотр пользователей"},
-                        status=status.HTTP_403_FORBIDDEN)
 
     def get(self, request: Request, pk: int=None) -> Response:
         """Просмотр списка пользователей либо профиля конкретного пользователя"""
         if pk:
-            # Если есть read_all_permission — увидит любого.
-            # Если только read_permission — увидит только если pk == request.user.id
             user = get_object_or_404(User, pk=pk)
             self.check_object_permissions(request, user)
             return Response(UserAdminSerializer(user).data)
 
-        # Логика фильтрации списка
-        return self.get_filtered_users(request)
+        queryset = User.objects.filter(id=request.user.id)
+        serializer = UserAdminSerializer(queryset, many=True)
+        return Response(serializer.data)
 
     def patch(self, request: Request, pk: int) -> Response:
         """Частичное обновление данных пользователя"""
         # Находим пользователя по ID
         target_user = get_object_or_404(User, pk=pk)
 
-        # Проверяем права: есть ли 'update_all' или ('update' и это сам пользователь)
+        # Проверяем права: есть ли 'update_all'
         self.check_object_permissions(request, target_user)
 
         # Обновляем данные
@@ -170,7 +142,7 @@ class UserManagementView(APIView):
         # Находим пользователя
         target_user = get_object_or_404(User, pk=pk)
 
-        # Проверяем права на 'delete_all' или ('delete' и это сам пользователь)
+        # Проверяем права на 'delete_all'
         self.check_object_permissions(request, target_user)
 
         # Мягкое удаление (деактивация)

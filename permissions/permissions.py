@@ -1,7 +1,6 @@
 from django.shortcuts import get_object_or_404
 from rest_framework.permissions import BasePermission
 
-from authentication.models import User
 from .models import AccessRule, Role, BusinessElement
 
 
@@ -106,3 +105,23 @@ class RBACPermission(BasePermission):
             return getattr(obj, 'owner_id', None) == user.id
 
         return False
+
+
+class IsNotSystemUser(BasePermission):
+    """
+    Доступ для не системного пользователя.
+    """
+    def has_permission(self, request, view):
+        """
+        Проверяем атрибут is_system.
+        """
+        return request.user and not getattr(request.user, 'is_system', False)
+
+
+class IsNotSystemObject(BasePermission):
+    """
+    Запрещает доступ к объектам, у которых is_system=True.
+    """
+    def has_object_permission(self, request, view, obj):
+        # Проверяем, не является ли объект системным
+        return not getattr(obj, 'is_system', False)
