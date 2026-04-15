@@ -20,12 +20,6 @@ class Command(BaseCommand):
                                   'create_permission': True, 'delete_all_permission': True},
             'access_rules': {'read_all_permission': True, 'update_all_permission': True,
                              'create_permission': True, 'delete_all_permission': True},
-            'orders': {'read_all_permission': True, 'update_all_permission': True,
-                       'create_permission': True, 'delete_all_permission': True},
-            'products': {'read_all_permission': True, 'update_all_permission': True,
-                         'create_permission': True, 'delete_all_permission': True},
-            'stores': {'read_all_permission': True, 'update_all_permission': True,
-                       'create_permission': True, 'delete_all_permission': True},
         },
 
         'manager': {

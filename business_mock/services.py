@@ -11,6 +11,10 @@ def get_object(pk, get_data: Callable) -> Any:
 
 def get_filtered_list(user: Any, element_slug: str, get_data: Callable) -> list[Any]:
     """Фильтрация списка объектов согласно установленным правам"""
+    # Системный пользователь имеет доступ ко всем элементам
+    if user.is_authenticated and user.is_system:
+        return get_data()
+
     # Получаем правила для текущего пользователя через его роли
     if user.is_authenticated:
         user_roles = user.roles.all()

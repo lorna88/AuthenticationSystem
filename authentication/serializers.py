@@ -77,13 +77,13 @@ class UserAdminSerializer(UserSerializer):
         fields = UserSerializer.Meta.fields + ['id', 'is_active', 'roles', 'created_at']
         read_only_fields = ['id', 'email', 'created_at']
 
-        def update(self, instance: User, validated_data: dict[str, Any]) -> User:
-            """Логика обновления профиля для админа"""
-            instance.is_active = validated_data.get('is_active', instance.is_active)
+    def update(self, instance: User, validated_data: dict[str, Any]) -> User:
+        """Логика обновления профиля для админа"""
+        instance.is_active = validated_data.get('is_active', instance.is_active)
 
-            # Обновляем все роли пользователя
-            if 'roles' in validated_data:
-                roles = validated_data.pop('roles')
-                instance.roles.set(roles)
+        # Обновляем все роли пользователя
+        if 'roles' in validated_data:
+            roles = validated_data.pop('roles')
+            instance.roles.set(roles)
 
-            return super().update(instance, validated_data)
+        return super().update(instance, validated_data)

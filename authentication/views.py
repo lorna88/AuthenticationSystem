@@ -107,7 +107,7 @@ class UserManagementView(APIView):
             self.check_object_permissions(request, user)
             return Response(UserAdminSerializer(user).data)
 
-        queryset = User.objects.filter(id=request.user.id)
+        queryset = User.objects.all()
         serializer = UserAdminSerializer(queryset, many=True)
         return Response(serializer.data)
 
