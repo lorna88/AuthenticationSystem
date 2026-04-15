@@ -29,3 +29,7 @@ class CustomAuthentication(BaseAuthentication):
 
         # Если учетные данные невалидны или юзер удален — ошибка 401
         raise exceptions.AuthenticationFailed('Пользователь не найден')
+
+    def authenticate_header(self, request: Request) -> str | None:
+        """Сообщаем DRF, какую аутентификацию используем"""
+        return auth_service.keyword

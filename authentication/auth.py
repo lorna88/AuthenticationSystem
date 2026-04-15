@@ -39,6 +39,7 @@ class AuthService(ABC):
 
 class JWTAuthService(AuthService):
     """Реализация аутентификации через JWT"""
+    keyword = 'Bearer'
 
     def extract_credentials(self, request: Any) -> Optional[str]:
         """Извлекает access-токен из заголовка"""

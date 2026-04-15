@@ -6,7 +6,6 @@ from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from permissions.models import AccessRule
 from permissions.permissions import RBACPermission, IsNotSystemUser, IsNotSystemObject
 from .auth import auth_service
 from .models import User
@@ -64,7 +63,6 @@ class RegisterUserView(CreateAPIView):
     queryset = User.objects.all()
     serializer_class = RegisterSerializer
     permission_classes = ()
-    # authentication_classes = ()
 
 
 class UserProfileView(APIView):
@@ -95,15 +93,6 @@ class UserProfileView(APIView):
         auth_service.revoke_session(token)
 
         return Response({"detail": "Аккаунт успешно деактивирован"}, status=204)
-
-    def http_method_not_allowed(self, request: Request, *args, **kwargs) -> Response:
-        """Убираем поддержку метода PUT в целях безопасности"""
-        if request.method == "PUT":
-            return Response({
-                "error": f"Метод {request.method} не поддерживается.",
-                "suggestion": "Пожалуйста, используйте PATCH для частичного обновления данных."
-            }, status=status.HTTP_405_METHOD_NOT_ALLOWED)
-        return self.http_method_not_allowed(request, *args, **kwargs)
 
 
 class UserManagementView(APIView):
@@ -153,16 +142,3 @@ class UserManagementView(APIView):
             {"detail": f"Пользователь {target_user.email} деактивирован"},
             status=status.HTTP_204_NO_CONTENT
         )
-
-    def http_method_not_allowed(self, request: Request, *args, **kwargs) -> Response:
-        """Методы POST и PUT не поддерживаются"""
-        suggestion = ""
-        if request.method == "POST":
-            suggestion = "Для создания пользователя используйте эндпоинт регистрации /authentication/register/"
-        if request.method == "PUT":
-            suggestion = "Пожалуйста, используйте PATCH для частичного обновления данных."
-        return Response({
-            "error": f"Метод {request.method} не поддерживается.",
-            "suggestion": suggestion
-        }, status=status.HTTP_405_METHOD_NOT_ALLOWED)
-
