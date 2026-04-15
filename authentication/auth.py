@@ -54,7 +54,7 @@ class JWTAuthService(AuthService):
             'exp': datetime.now(timezone.utc) + timedelta(hours=24),
             'iat': datetime.now(timezone.utc)
         }
-        token = jwt.encode(payload, settings.SECRET_KEY, algorithms=['HS256'])
+        token = jwt.encode(payload, settings.SECRET_KEY, algorithm='HS256')
         return {"access": token}
 
     def validate_session(self, token: str) -> Optional[int]:

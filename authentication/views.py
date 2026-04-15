@@ -149,10 +149,6 @@ class UserManagementView(APIView):
         target_user.is_active = False
         target_user.save()
 
-        # Завершаем сессию с пользователем
-        token = auth_service.extract_credentials(request)
-        auth_service.revoke_session(token)
-
         return Response(
             {"detail": f"Пользователь {target_user.email} деактивирован"},
             status=status.HTTP_204_NO_CONTENT

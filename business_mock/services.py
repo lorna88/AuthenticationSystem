@@ -29,5 +29,4 @@ def get_filtered_list(user: Any, element_slug: str, get_data: Callable) -> list[
         filtered_objects = [o for o in all_objects if o["owner_id"] == user.id]
         return filtered_objects
 
-    # Если прав нет
     return []

@@ -54,8 +54,6 @@ class StoreMockView(APIView):
 
         # Для списка делаем фильтрацию
         stores = get_filtered_list(request.user, self.element_slug, self.get_mock_data)
-        if not stores:
-            self.permission_denied(request, message="У вас нет прав на просмотр магазинов.")
         return Response(stores)
 
     def post(self, request:Request) -> Response:

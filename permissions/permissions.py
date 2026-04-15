@@ -11,7 +11,7 @@ class RBACPermission(BasePermission):
 
     @staticmethod
     def get_action_name(method_name: str) -> str:
-        """Маппинг HTTP-методов на ваши поля в БД"""
+        """Маппинг HTTP-методов на поля в БД"""
         mapping = {
             'GET': 'read',
             'POST': 'create',
@@ -28,6 +28,10 @@ class RBACPermission(BasePermission):
         user = request.user
         if not user:
             return False
+
+        # Системный пользователь имеет доступ ко всем элементам
+        if user.is_authenticated and user.is_system:
+            return True
 
         # Определяем, к какому элементу идет обращение
         element_slug = getattr(view, 'element_slug', None)
@@ -50,18 +54,16 @@ class RBACPermission(BasePermission):
 
         # Определяем права доступа для системных таблиц
         if element.is_system:
-            if user.is_system:
-                return True
             if action == 'create':
                 return rules.filter(**{f"create_permission": True}).exists()
             return rules.filter(**{f"{action}_all_permission": True}).exists()
 
-        # Проверяем наличие хотя бы одного обычного правила
-        if user.is_authenticated and rules.filter(**{f"{action}_permission": True}).exists():
+        # Проверяем наличие хотя бы одного правила с префиксом _all
+        if action != 'create' and rules.filter(**{f"{action}_all_permission": True}).exists():
             return True
 
-        # Проверяем наличие хотя бы одного правила с префиксом _all
-        if rules.filter(**{f"{action}_all_permission": True}).exists():
+        # Проверяем наличие хотя бы одного обычного правила
+        if user.is_authenticated and rules.filter(**{f"{action}_permission": True}).exists():
             return True
 
         return False
@@ -71,6 +73,10 @@ class RBACPermission(BasePermission):
         Проверка прав на уровне конкретного объекта (владение).
         """
         user = request.user
+
+        # Системный пользователь имеет доступ ко всем элементам
+        if user.is_authenticated and user.is_system:
+            return True
 
         # Определяем, к какому элементу идет обращение
         element_slug = getattr(view, 'element_slug', None)
@@ -91,8 +97,6 @@ class RBACPermission(BasePermission):
 
         # Определяем права доступа для системных таблиц
         if element.is_system:
-            if user.is_system:
-                return True
             return rules.filter(**{f"{action}_all_permission": True}).exists()
 
         # Если есть право "All" — разрешаем доступ к любому объекту
@@ -102,7 +106,11 @@ class RBACPermission(BasePermission):
         # Если есть обычное право — проверяем владельца
         if user.is_authenticated and rules.filter(**{f"{action}_permission": True}).exists():
             # Проверяем, совпадает ли ID пользователя с полем owner у объекта
-            return getattr(obj, 'owner_id', None) == user.id
+            if isinstance(obj, dict):
+                owner_id = obj.get('owner_id', None)
+            else:
+                owner_id = getattr(obj, 'owner_id', None)
+            return owner_id == user.id
 
         return False
 

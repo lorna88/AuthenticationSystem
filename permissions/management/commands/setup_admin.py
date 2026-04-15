@@ -39,7 +39,7 @@ class Command(BaseCommand):
 
         'user': {
             'orders': {'read_permission': True, 'create_permission': True,
-                       'delete_permission': True},
+                       'update_permission': True, 'delete_permission': True},
             'products': {'read_all_permission': True},
             'stores': {'read_all_permission': True},
         },

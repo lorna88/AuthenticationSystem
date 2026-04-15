@@ -18,10 +18,10 @@ class OrderMockView(APIView):
     def get_mock_data(self):
         """Эмуляция данных в БД (в реальном проекте это была бы модель Order)"""
         return [
-            {"id": 1, "name": "Заказ Apple iPhone", "owner_id": 1},  # Владелец - Admin
-            {"id": 2, "name": "Заказ Samsung TV", "owner_id": 2},  # Владелец - Manager
-            {"id": 3, "name": "Заказ Кофемашина", "owner_id": 3},  # Владелец - User
-            {"id": 4, "name": "Заказ Ноутбук", "owner_id": 2},  # Владелец - Manager
+            {"id": 1, "name": "Заказ Apple iPhone", "owner_id": 1},
+            {"id": 2, "name": "Заказ Samsung TV", "owner_id": 2},
+            {"id": 3, "name": "Заказ Кофемашина", "owner_id": 3},
+            {"id": 4, "name": "Заказ Ноутбук", "owner_id": 2},
         ]
 
     def get(self, request: Request, pk: int=None) -> Response:
@@ -37,8 +37,6 @@ class OrderMockView(APIView):
 
         # Для списка делаем фильтрацию
         orders = get_filtered_list(request.user, self.element_slug, self.get_mock_data)
-        if not orders:
-            self.permission_denied(request, message="У вас нет прав на просмотр заказов.")
         return Response(orders)
 
     def post(self, request:Request) -> Response:
