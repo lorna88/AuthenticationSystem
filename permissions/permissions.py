@@ -1,4 +1,3 @@
-from django.shortcuts import get_object_or_404
 from rest_framework.permissions import BasePermission
 
 from .models import AccessRule, Role, BusinessElement
@@ -26,21 +25,20 @@ class RBACPermission(BasePermission):
         Проверка прав на уровне эндпоинта.
         """
         user = request.user
-        if not user:
-            return False
 
         # Системный пользователь имеет доступ ко всем элементам
-        if user.is_authenticated and user.is_system:
+        if getattr(user, 'is_system', False):
             return True
 
         # Определяем, к какому элементу идет обращение
         element_slug = getattr(view, 'element_slug', None)
         if not element_slug:
             return False
-        element = get_object_or_404(BusinessElement, slug=element_slug)
 
         # Получаем название действия с элементом
         action = self.get_action_name(request.method)
+        if not action:
+            return False
 
         # Ищем правила для всех ролей пользователя
         if user.is_authenticated:
@@ -50,10 +48,15 @@ class RBACPermission(BasePermission):
             # Иначе берем гостевые роли
             user_roles = Role.objects.filter(is_guest=True)
 
+        if not user_roles.exists():
+            return False
+
         rules = AccessRule.objects.filter(role__in=user_roles, element__slug=element_slug)
 
+        element_is_system = BusinessElement.objects.filter(slug=element_slug, is_system=True).exists()
+
         # Определяем права доступа для системных таблиц
-        if element.is_system:
+        if element_is_system:
             if action == 'create':
                 return rules.filter(**{f"create_permission": True}).exists()
             return rules.filter(**{f"{action}_all_permission": True}).exists()
@@ -75,12 +78,11 @@ class RBACPermission(BasePermission):
         user = request.user
 
         # Системный пользователь имеет доступ ко всем элементам
-        if user.is_authenticated and user.is_system:
+        if getattr(user, 'is_system', False):
             return True
 
         # Определяем, к какому элементу идет обращение
         element_slug = getattr(view, 'element_slug', None)
-        element = get_object_or_404(BusinessElement, slug=element_slug)
 
         # Получаем название действия с элементом
         action = self.get_action_name(request.method)
@@ -95,8 +97,10 @@ class RBACPermission(BasePermission):
 
         rules = AccessRule.objects.filter(role__in=user_roles, element__slug=element_slug)
 
+        element_is_system = BusinessElement.objects.filter(slug=element_slug, is_system=True).exists()
+
         # Определяем права доступа для системных таблиц
-        if element.is_system:
+        if element_is_system:
             return rules.filter(**{f"{action}_all_permission": True}).exists()
 
         # Если есть право "All" — разрешаем доступ к любому объекту
