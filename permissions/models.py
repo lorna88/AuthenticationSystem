@@ -1,5 +1,6 @@
 from django.db import models
 
+
 class Role(models.Model):
     """Модель для ролей"""
     name = models.CharField(max_length=100)

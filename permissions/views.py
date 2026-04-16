@@ -15,6 +15,7 @@ class AccessRuleViewSet(ModelViewSet):
     element_slug = 'access_rules'
     http_method_names = ['get', 'post', 'patch', 'delete', 'head', 'options']
 
+
 class RoleViewSet(ModelViewSet):
     """
     Все CRUD операции для ролей
@@ -24,6 +25,7 @@ class RoleViewSet(ModelViewSet):
     permission_classes = [RBACPermission]
     element_slug = 'roles'
     http_method_names = ['get', 'post', 'patch', 'delete', 'head', 'options']
+
 
 class BusinessElementViewSet(ModelViewSet):
     """

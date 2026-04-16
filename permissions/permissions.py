@@ -53,12 +53,15 @@ class RBACPermission(BasePermission):
 
         rules = AccessRule.objects.filter(role__in=user_roles, element__slug=element_slug)
 
-        element_is_system = BusinessElement.objects.filter(slug=element_slug, is_system=True).exists()
+        element_is_system = BusinessElement.objects.filter(
+            slug=element_slug,
+            is_system=True
+        ).exists()
 
         # Определяем права доступа для системных таблиц
         if element_is_system:
             if action == 'create':
-                return rules.filter(**{f"create_permission": True}).exists()
+                return rules.filter(**{"create_permission": True}).exists()
             return rules.filter(**{f"{action}_all_permission": True}).exists()
 
         # Проверяем наличие хотя бы одного правила с префиксом _all
@@ -97,7 +100,10 @@ class RBACPermission(BasePermission):
 
         rules = AccessRule.objects.filter(role__in=user_roles, element__slug=element_slug)
 
-        element_is_system = BusinessElement.objects.filter(slug=element_slug, is_system=True).exists()
+        element_is_system = BusinessElement.objects.filter(
+            slug=element_slug,
+            is_system=True
+        ).exists()
 
         # Определяем права доступа для системных таблиц
         if element_is_system:

@@ -24,7 +24,7 @@ class OrderMockView(APIView):
             {"id": 4, "name": "Заказ Ноутбук", "owner_id": 2},
         ]
 
-    def get(self, request: Request, pk: int=None) -> Response:
+    def get(self, request: Request, pk: int = None) -> Response:
         """Просмотр списка заказов либо деталей конкретного заказа"""
         if pk:
             order = get_object(pk, self.get_mock_data)
@@ -39,7 +39,7 @@ class OrderMockView(APIView):
         orders = get_filtered_list(request.user, self.element_slug, self.get_mock_data)
         return Response(orders)
 
-    def post(self, request:Request) -> Response:
+    def post(self, request: Request) -> Response:
         """Создание нового заказа"""
         return Response({
             "detail": "Заказ успешно создан",

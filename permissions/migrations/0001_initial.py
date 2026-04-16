@@ -15,7 +15,12 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='BusinessElement',
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                ('id', models.BigAutoField(
+                    auto_created=True,
+                    primary_key=True,
+                    serialize=False,
+                    verbose_name='ID')
+                 ),
                 ('name', models.CharField(max_length=100)),
                 ('slug', models.SlugField(unique=True)),
             ],
@@ -23,7 +28,12 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='Role',
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                ('id', models.BigAutoField(
+                    auto_created=True,
+                    primary_key=True,
+                    serialize=False,
+                    verbose_name='ID')
+                 ),
                 ('name', models.CharField(max_length=100)),
                 ('slug', models.SlugField(unique=True)),
             ],
@@ -31,7 +41,12 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='AccessRule',
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                ('id', models.BigAutoField(
+                    auto_created=True,
+                    primary_key=True,
+                    serialize=False,
+                    verbose_name='ID')
+                 ),
                 ('read_permission', models.BooleanField(default=False)),
                 ('read_all_permission', models.BooleanField(default=False)),
                 ('create_permission', models.BooleanField(default=False)),
@@ -39,8 +54,16 @@ class Migration(migrations.Migration):
                 ('update_all_permission', models.BooleanField(default=False)),
                 ('delete_permission', models.BooleanField(default=False)),
                 ('delete_all_permission', models.BooleanField(default=False)),
-                ('element', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='rules', to='permissions.businesselement')),
-                ('role', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='rules', to='permissions.role')),
+                ('element', models.ForeignKey(
+                    on_delete=django.db.models.deletion.CASCADE,
+                    related_name='rules',
+                    to='permissions.businesselement')
+                 ),
+                ('role', models.ForeignKey(
+                    on_delete=django.db.models.deletion.CASCADE,
+                    related_name='rules',
+                    to='permissions.role')
+                 ),
             ],
         ),
     ]

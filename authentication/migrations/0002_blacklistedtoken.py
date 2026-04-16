@@ -13,7 +13,12 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='BlacklistedToken',
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                ('id', models.BigAutoField(
+                    auto_created=True,
+                    primary_key=True,
+                    serialize=False,
+                    verbose_name='ID')
+                 ),
                 ('token', models.TextField(unique=True)),
                 ('expires_at', models.DateTimeField()),
                 ('blacklisted_at', models.DateTimeField(auto_now_add=True)),

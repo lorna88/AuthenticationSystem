@@ -57,7 +57,6 @@ class LogoutView(APIView):
         )
 
 
-
 class RegisterUserView(CreateAPIView):
     """View для регистрации пользователя."""
     queryset = User.objects.all()
@@ -100,7 +99,7 @@ class UserManagementView(APIView):
     permission_classes = [RBACPermission, IsNotSystemObject]
     element_slug = 'users'
 
-    def get(self, request: Request, pk: int=None) -> Response:
+    def get(self, request: Request, pk: int = None) -> Response:
         """Просмотр списка пользователей либо профиля конкретного пользователя"""
         if pk:
             user = get_object_or_404(User, pk=pk)

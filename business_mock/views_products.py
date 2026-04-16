@@ -52,7 +52,7 @@ class ProductMockView(APIView):
             }
         ]
 
-    def get(self, request: Request, pk: int=None) -> Response:
+    def get(self, request: Request, pk: int = None) -> Response:
         """Просмотр списка продуктов либо деталей конкретного продукта"""
         if pk:
             product = get_object(pk, self.get_mock_data)
@@ -67,7 +67,7 @@ class ProductMockView(APIView):
         products = get_filtered_list(request.user, self.element_slug, self.get_mock_data)
         return Response(products)
 
-    def post(self, request:Request) -> Response:
+    def post(self, request: Request) -> Response:
         """Создание нового товара"""
         return Response({
             "detail": "Товар успешно создан",
